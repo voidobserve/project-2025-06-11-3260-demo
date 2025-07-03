@@ -1,0 +1,14 @@
+C51 COMPILER V9.60.7.0   USE_MY_DEBUG                                                          05/27/2024 15:58:10 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE USE_MY_DEBUG
+OBJECT MODULE PLACED IN .\Release\Objects\USE_MY_DEBUG.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\USE_MY_DEBUG.c LARGE OPTIMIZE(8,SPEED) BROWSE INTVECTOR(0X000
+                    -C) INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\Relea
+                    -se\Listings\USE_MY_DEBUG.lst) TABS(2) OBJECT(.\Release\Objects\USE_MY_DEBUG.obj)
+
+line level    source
+
+*** ERROR C318 OF ..\..\Hardware\USE_MY_DEBUG.c: can't open file '..\..\Hardware\USE_MY_DEBUG.c'
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

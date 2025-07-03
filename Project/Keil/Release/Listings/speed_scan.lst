@@ -1,0 +1,217 @@
+C51 COMPILER V9.60.7.0   SPEED_SCAN                                                        06/05/2024 13:36:15 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SPEED_SCAN
+OBJECT MODULE PLACED IN .\Release\Objects\speed_scan.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\speed_scan.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) 
+                    -INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\Release\
+                    -Listings\speed_scan.lst) TABS(2) OBJECT(.\Release\Objects\speed_scan.obj)
+
+line level    source
+
+   1          #include "speed_scan.h"
+   2          
+   3          // ¶àÉÙ¸öÂö³å±íÊ¾Ò»È¦
+   4          #ifndef PULSE_PER_TURN
+   5          #define PULSE_PER_TURN 16
+   6          #endif // ¶àÉÙ¸öÂö³å±íÊ¾Ò»È¦
+   7          
+   8          // ³µÂÖÒ»È¦±íÊ¾¶àÉÙºÁÃ×
+   9          #ifndef MM_PER_TURN
+  10          #define MM_PER_TURN 1795 // Ò»È¦1795ºÁÃ×
+  11          #endif                   // ³µÂÖÒ»È¦±íÊ¾¶àÉÙºÁÃ×
+  12          
+  13          static volatile u32 pulse_cnt = 0; // Âö³å¼ÆÊýÖµ
+  14          volatile u32 distance = 0;         // ´æ·ÅÃ¿´ÎÉ¨ÃèÊ±×ß¹ýµÄÂ·³Ì£¨µ¥Î»£ººÁÃ×£©-->ÓÃÓÚÀï³Ì±íµÄ¼ÆÊý
+  15          
+  16          // Ê±ËÙÉ¨ÃèµÄÅäÖÃ
+  17          void speed_scan_config(void)
+  18          {
+  19   1          // Ê¹ÓÃIOÖÐ¶ÏÀ´¶ÔÂö³å¼ÆÊý
+  20   1          __SetIRQnIP(P1_IRQn, P1_IQn_CFG); // ÉèÖÃÖÐ¶ÏÓÅÏÈ¼¶
+  21   1          __EnableIRQ(P1_IRQn);             // Ê¹ÄÜP1ÖÐ¶Ï
+  22   1          IE_EA = 1;                        // Ê¹ÄÜ×Ü¿ª¹Ø
+  23   1      
+  24   1          P1_MD0 &= ~GPIO_P13_MODE_SEL(0x3); // ÊäÈëÄ£Ê½
+  25   1          P1_PD |= GPIO_P13_PULL_PD(0x1);    // ÅäÖÃÎªÏÂÀ­
+  26   1          P1_IMK |= GPIO_P13_IRQ_MASK(0x1);  // Ê¹ÄÜIOÖÐ¶Ï
+  27   1          P1_TRG0 &= ~GPIO_P13_TRG_SEL(0x3);
+  28   1          P1_TRG0 |= GPIO_P13_TRG_SEL(0x2); // ÅäÖÃÉÏÉýÑØ´¥·¢
+  29   1      }
+  30          
+  31          // ¹Ø±ÕËÙ¶ÈÉ¨ÃèµÄÏà¹ØÖÐ¶Ï£¬Çå¿ÕÏà¹ØµÄ¼ÆÊý
+  32          static void speed_scan_disable(void)
+  33          {
+  34   1          __DisableIRQ(P1_IRQn); // ¹Ø±ÕP1ÖÐ¶Ï
+  35   1          pulse_cnt = 0;         // Çå¿ÕÂö³å¼ÆÊý
+  36   1          tmr1_disable();
+  37   1          tmr1_cnt = 0;
+  38   1      }
+  39          
+  40          // ¿ªÆôËÙ¶ÈÉ¨ÃèÏà¹ØµÄÖÐ¶Ï
+  41          static void speed_scan_enable(void)
+  42          {
+  43   1          pulse_cnt = 0;
+  44   1          tmr1_cnt = 0;
+  45   1          __EnableIRQ(P1_IRQn); // Ê¹ÄÜP1ÖÐ¶Ï
+  46   1          tmr1_enable();
+  47   1      }
+  48          
+  49          // »ñÈ¡Ã¿Ð¡Ê±×ß¹ý¶àÉÙºÁÃ×
+  50          u32 getspeed_mm_per_hour(void)
+  51          {
+  52   1          u32 tmp = 0;
+  53   1          speed_scan_enable();
+C51 COMPILER V9.60.7.0   SPEED_SCAN                                                        06/05/2024 13:36:15 PAGE 2   
+
+  54   1          while (tmr1_cnt < 2500)
+  55   1              ;                                           // µÈ´ý250ms
+  56   1          tmp = pulse_cnt * MM_PER_TURN / PULSE_PER_TURN; // 250ms×ß¹ýÀ´¶àÉÙºÁÃ×
+  57   1          distance += tmp;                                // ´æ·Å×ß¹ýµÄ¾àÀë£¬µ¥Î»£ººÁÃ×(ÒòÎªÃ»ÓÐÊ¹ÓÃ¸¡µãÀàÐÍ,ÐèÒ
+             -ªÀÛ¼Ó,·ñÔòºóÐøÍ³¼ÆÀï³ÌÊ±¾Í»á¶ªÊ§Êý¾Ý)
+  58   1          speed_scan_disable();
+  59   1          tmp *= 14400; // ¼ÆËãµÃ³ö1Ð¡Ê±×ß¹ýµÄºÁÃ×     // tmp = tmp * 4 * 3600;
+  60   1          return tmp;
+  61   1      }
+  62          
+  63          // ²É¼¯Ò»´ÎËÙ¶ÈÊý¾Ý
+  64          u32 get_speed(void)
+  65          {
+  66   1      #if 0
+                  u32 speed_km_per_hour = getspeed_mm_per_hour(); // µÃµ½Ã¿Ð¡Ê±×ß¹ýµÄºÁÃ×Êý
+                  // speed_km_per_hour /= 1000000;                  // »»Ëã³ÉÃ¿Ð¡Ê±×ß¹ýµÄÇ§Ã×Êý
+                  return speed_km_per_hour / 1000000;
+              #endif
+  71   1      
+  72   1          return (getspeed_mm_per_hour() / 1000000);
+  73   1      }
+  74          
+  75          // ËÙ¶ÈÉ¨Ãèº¯Êý£¬ÒÑ¾­ÑéÖ¤¿ÉÒÔÊ¹ÓÃ
+  76          void speed_scan(void)
+  77          {
+  78   1          static u32 last_speed = 0;   // ¼ÇÂ¼ÉÏÒ»´Î²É¼¯µ½µÄËÙ¶È
+  79   1          u32 cur_speed = get_speed(); // µ±Ç°²É¼¯µÄËÙ¶È
+  80   1          // printf("--------%lu km/h\n", cur_speed);
+  81   1      
+  82   1          if (((cur_speed > last_speed) && (cur_speed - last_speed > 2)) ||
+  83   1              ((cur_speed < last_speed) && (last_speed - cur_speed > 2)))
+  84   1          {
+  85   2              // Èç¹û±¾´Î²É¼¯µ½µÄÊý¾ÝÓëÉÏÒ»´Î²É¼¯µ½µÄÊý¾Ý²îÖµ³¬¹ýÁË1£¬¿ÉÒÔÖ±½Ó·¢ËÍ³öÈ¥
+  86   2              printf("%lu km/h\n", cur_speed);
+  87   2              last_speed = cur_speed;
+  88   2      
+  89   2              fun_info.speed = cur_speed;
+  90   2              getSpeed = 1;
+  91   2          }
+  92   1          else if (((cur_speed > last_speed) && (cur_speed - last_speed < 2)) ||
+  93   1                   ((cur_speed < last_speed) && (last_speed - cur_speed < 2)))
+  94   1          {
+  95   2              // Èç¹û±¾´Î²É¼¯µ½µÄÊý¾ÝÓëÉÏÒ»´Î²É¼¯µ½µÄÊý¾Ý²îÖµÖ»ÓÐ1£¬ÔÙ²É¼¯¼¸´Î
+  96   2              u8 cnt = 0;
+  97   2      
+  98   2              if ((cur_speed > last_speed) && (cur_speed - last_speed < 2))
+  99   2              {
+ 100   3                  // Èç¹û²âµÃËÙ¶ÈÊÇÔö¼ÓµÄ£¬ÒªÈ·¶¨ËüÊÇÕæµÄÔÚ¼ÓËÙ
+ 101   3                  u8 i = 0;
+ 102   3      
+ 103   3                  for (i = 0; i < 3; i++)
+ 104   3                  {
+ 105   4                      cur_speed = get_speed();
+ 106   4      
+ 107   4                      if ((cur_speed > last_speed) && (cur_speed - last_speed < 2))
+ 108   4                      {
+ 109   5                          cnt++;
+ 110   5                      }
+ 111   4                  }
+ 112   3              }
+ 113   2              else if ((cur_speed < last_speed) && (last_speed - cur_speed < 2))
+ 114   2              {
+C51 COMPILER V9.60.7.0   SPEED_SCAN                                                        06/05/2024 13:36:15 PAGE 3   
+
+ 115   3                  // Èç¹û²âµÃËÙ¶ÈÊÇ¼õÉÙµÄ£¬ÒªÈ·¶¨ËüÊÇÕæµÄÔÚ¼õËÙ
+ 116   3                  u8 i = 0;
+ 117   3                  for (i = 0; i < 3; i++)
+ 118   3                  {
+ 119   4                      cur_speed = get_speed();
+ 120   4      
+ 121   4                      if ((cur_speed < last_speed) && (last_speed - cur_speed < 2))
+ 122   4                      {
+ 123   5                          cnt++;
+ 124   5                      }
+ 125   4                  }
+ 126   3              }
+ 127   2      
+ 128   2              if (cnt >= 2)
+ 129   2              {
+ 130   3                  printf("%lu km/h\n", cur_speed);
+ 131   3                  last_speed = cur_speed;
+ 132   3      
+ 133   3                  fun_info.speed = cur_speed;
+ 134   3                  getSpeed = 1;
+ 135   3              }
+ 136   2          }
+ 137   1          else if (cur_speed == 0 && last_speed != 0)
+ 138   1          {
+ 139   2              printf("%lu km/h\n", cur_speed);
+ 140   2      
+ 141   2              fun_info.speed = cur_speed;
+ 142   2              getSpeed = 1;
+ 143   2          }
+ 144   1      
+ 145   1      #if 0
+              #ifdef INTERNATIONAL // Ç§Ã×Ã¿Ð¡Ê±
+              
+                  u32 speed_km_per_hour = getspeed_mm_per_hour(); // µÃµ½Ã¿Ð¡Ê±×ß¹ýµÄºÁÃ×Êý
+                  speed_km_per_hour /= 1000000;                   // »»Ëã³ÉÃ¿Ð¡Ê±×ß¹ýµÄÇ§Ã×Êý
+                  printf("%lu km/h\n", speed_km_per_hour);
+              
+                  fun_info.speed = speed_km_per_hour;
+                  getSpeed = 1;
+              #endif               // INTERNATIONAL£¬¹ú¼Êµ¥Î»£¬Ç§Ã×Ã¿Ð¡Ê±
+              
+              #ifdef IMPERIAL // Ó¢ÖÆµ¥Î»
+                  // »ñÈ¡ËÙ¶È£¬Ó¢ÀïÃ¿Ð¡Ê±
+                  u32 speed_mile_per_hour = getspeed_mm_per_hour();                       // µÃµ½Ã¿Ð¡Ê±×ß¹ýµÄºÁÃ×Êý
+                  speed_mile_per_hour = speed_mile_per_hour * 621371 / 1000000 / 1000000; // Ã¿Ð¡Ê±×ß¹ýµÄÓ¢ÀïÊý
+                  // printf("%lu mile/h\n", speed_mile_per_hour);
+              
+                  fun_info.speed = speed_mile_per_hour;
+                  getSpeed = 1;
+              #endif          // IMPERIAL£¬Ó¢ÖÆµ¥Î»
+              #endif
+ 166   1      }
+ 167          
+ 168          // P1ÖÐ¶Ï·þÎñº¯Êý
+ 169          void P1_IRQHandler(void) interrupt P1_IRQn
+ 170          {
+ 171   1          // Px_PND¼Ä´æÆ÷Ð´ÈÎºÎÖµ¶¼»áÇå±êÖ¾Î»
+ 172   1          u8 p1_pnd = P1_PND;
+ 173   1      
+ 174   1          // ½øÈëÖÐ¶ÏÉèÖÃIP£¬²»¿ÉÉ¾³ý
+ 175   1          __IRQnIPnPush(P1_IRQn);
+ 176   1          // ---------------- ÓÃ»§º¯Êý´¦Àí -------------------
+C51 COMPILER V9.60.7.0   SPEED_SCAN                                                        06/05/2024 13:36:15 PAGE 4   
+
+ 177   1          if (p1_pnd & GPIO_P13_IRQ_PNG(0x1))
+ 178   1          {
+ 179   2              pulse_cnt++;
+ 180   2          }
+ 181   1          P1_PND = p1_pnd; // ÇåP1ÖÐ¶Ï±êÖ¾Î»
+ 182   1          // -------------------------------------------------
+ 183   1          // ÍË³öÖÐ¶ÏÉèÖÃIP£¬²»¿ÉÉ¾³ý
+ 184   1          __IRQnIPnPop(P1_IRQn);
+ 185   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    871    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =     12      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,170 @@
+C51 COMPILER V9.60.7.0   SEND_DATA                                                         06/05/2024 13:36:14 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SEND_DATA
+OBJECT MODULE PLACED IN .\Release\Objects\send_data.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\send_data.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) I
+                    -NCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\Release\L
+                    -istings\send_data.lst) TABS(2) OBJECT(.\Release\Objects\send_data.obj)
+
+line level    source
+
+   1          #include "send_data.h"
+   2          
+   3          void send_data(u32 instruct, u32 send_data)
+   4          {
+   5   1          u32 check_num = 0; // 存放校验和
+   6   1      
+   7   1          uart0_sendbyte(FORMAT_HEAD); // 先发送格式头
+   8   1      
+   9   1          switch (instruct)
+  10   1          {
+  11   2          case SEND_GEAR:                // 发送挡位的状态
+  12   2              uart0_sendbyte(0x05);      // 发送指令的总长度
+  13   2              uart0_sendbyte(SEND_GEAR); // 发送指令
+  14   2              uart0_sendbyte(send_data);
+  15   2      
+  16   2              check_num = FORMAT_HEAD + 0x05 + SEND_GEAR + (u8)send_data;
+  17   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  18   2      
+  19   2              break;
+  20   2      
+  21   2          case SEND_BATTERY:                // 发送电池电量的状态
+  22   2              uart0_sendbyte(0x05);         // 发送指令的总长度
+  23   2              uart0_sendbyte(SEND_BATTERY); // 发送指令
+  24   2              uart0_sendbyte(send_data);    // 发送电池电量信息
+  25   2      
+  26   2              check_num = FORMAT_HEAD + 0x05 + SEND_BATTERY + (u8)send_data;
+  27   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  28   2              break;
+  29   2      
+  30   2          case SEND_BARKE:                // 发送刹车的状态
+  31   2              uart0_sendbyte(0x05);       // 发送指令的总长度
+  32   2              uart0_sendbyte(SEND_BARKE); // 发送指令
+  33   2              uart0_sendbyte(send_data);  // 发送信息
+  34   2      
+  35   2              check_num = FORMAT_HEAD + 0x05 + SEND_BARKE + (u8)send_data;
+  36   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  37   2              break;
+  38   2      
+  39   2          case SEND_LEFT_TURN:                // 发送左转向灯的状态
+  40   2              uart0_sendbyte(0x05);           // 发送指令的总长度
+  41   2              uart0_sendbyte(SEND_LEFT_TURN); // 发送指令
+  42   2              uart0_sendbyte(send_data);      // 发送信息
+  43   2      
+  44   2              check_num = FORMAT_HEAD + 0x05 + SEND_LEFT_TURN + (u8)send_data;
+  45   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  46   2              break;
+  47   2      
+  48   2          case SEND_RIGHT_TURN:                // 发送右转向灯的状态
+  49   2              uart0_sendbyte(0x05);            // 发送指令的总长度
+  50   2              uart0_sendbyte(SEND_RIGHT_TURN); // 发送指令
+  51   2              uart0_sendbyte(send_data);       // 发送信息
+  52   2      
+  53   2              check_num = FORMAT_HEAD + 0x05 + SEND_RIGHT_TURN + (u8)send_data;
+C51 COMPILER V9.60.7.0   SEND_DATA                                                         06/05/2024 13:36:14 PAGE 2   
+
+  54   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  55   2              break;
+  56   2      
+  57   2          case SEND_HIGH_BEAM:                // 发送远光灯的状态
+  58   2              uart0_sendbyte(0x05);           // 发送指令的总长度
+  59   2              uart0_sendbyte(SEND_HIGH_BEAM); // 发送指令
+  60   2              uart0_sendbyte(send_data);      // 发送信息
+  61   2      
+  62   2              check_num = FORMAT_HEAD + 0x05 + SEND_HIGH_BEAM + (u8)send_data;
+  63   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  64   2              break;
+  65   2      
+  66   2          case SEND_ENGINE_SPEED:                // 发送发动机的转速
+  67   2              uart0_sendbyte(0x06);              // 发送指令的总长度
+  68   2              uart0_sendbyte(SEND_ENGINE_SPEED); // 发送指令
+  69   2              uart0_sendbyte(send_data >> 8);    // 发送信息
+  70   2              uart0_sendbyte(send_data);         // 发送信息
+  71   2      
+  72   2              check_num = FORMAT_HEAD + 0x06 + SEND_ENGINE_SPEED + (u8)(send_data >> 8) + (u8)(send_data);
+  73   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  74   2              break;
+  75   2      
+  76   2          case SEND_SPEED:                    // 发送时速
+  77   2              uart0_sendbyte(0x06);           // 发送指令的总长度
+  78   2              uart0_sendbyte(SEND_SPEED);     // 发送指令
+  79   2              uart0_sendbyte(send_data >> 8); // 发送信息
+  80   2              uart0_sendbyte(send_data);      // 发送信息
+  81   2      
+  82   2              check_num = FORMAT_HEAD + 0x06 + SEND_SPEED + (u8)(send_data >> 8) + (u8)(send_data);
+  83   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  84   2              break;
+  85   2      
+  86   2          case SEND_FUEL:                // 发送油量
+  87   2              uart0_sendbyte(0x05);      // 发送指令的总长度
+  88   2              uart0_sendbyte(SEND_FUEL); // 发送指令
+  89   2              uart0_sendbyte(send_data); // 发送信息
+  90   2      
+  91   2              check_num = FORMAT_HEAD + 0x05 + SEND_FUEL + (u8)send_data;
+  92   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+  93   2              break;
+  94   2      
+  95   2          case SEND_WATER_TEMP:                // 发送水温
+  96   2              uart0_sendbyte(0x05);            // 发送指令的总长度
+  97   2              uart0_sendbyte(SEND_WATER_TEMP); // 发送指令
+  98   2              uart0_sendbyte(send_data);       // 发送信息
+  99   2      
+ 100   2              check_num = FORMAT_HEAD + 0x05 + SEND_WATER_TEMP + (u8)send_data;
+ 101   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+ 102   2              break;
+ 103   2      
+ 104   2          case SEND_TOTAL_MILEAGE:                // 发送大计里程
+ 105   2              uart0_sendbyte(0x07);               // 发送指令的总长度
+ 106   2              uart0_sendbyte(SEND_TOTAL_MILEAGE); // 发送指令
+ 107   2      
+ 108   2              uart0_sendbyte(send_data >> 16); // 发送信息
+ 109   2              uart0_sendbyte(send_data >> 8);  // 发送信息
+ 110   2              uart0_sendbyte(send_data);       // 发送信息
+ 111   2      
+ 112   2              check_num = FORMAT_HEAD + 0x07 + SEND_TOTAL_MILEAGE + (u8)(send_data >> 16) + (u8)(send_data >> 8)
+             - + (u8)send_data;
+ 113   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+ 114   2              break;
+C51 COMPILER V9.60.7.0   SEND_DATA                                                         06/05/2024 13:36:14 PAGE 3   
+
+ 115   2      
+ 116   2          case SEND_SUBTOTAL_MILEAGE: // 发送小计里程
+ 117   2      
+ 118   2              uart0_sendbyte(0x06);               // 发送指令的总长度
+ 119   2              uart0_sendbyte(SEND_SUBTOTAL_MILEAGE); // 发送指令
+ 120   2      
+ 121   2              uart0_sendbyte(send_data >> 8);  // 发送信息
+ 122   2              uart0_sendbyte(send_data);       // 发送信息
+ 123   2      
+ 124   2              check_num = FORMAT_HEAD + 0x06 + SEND_SUBTOTAL_MILEAGE + (u8)(send_data >> 8) + (u8)send_data;
+ 125   2              check_num &= 0x0F; // 取前面的数字相加的低四位
+ 126   2      
+ 127   2              break;
+ 128   2          }
+ 129   1      
+ 130   1          uart0_sendbyte(check_num); // 发送校验和
+ 131   1      
+ 132   1          delay_ms(10); // 每次发送完成后，延时10ms
+ 133   1      }
+ 134          
+ 135          // 用来发送超过4个字节的数据的函数
+ 136          void send_datas(u32 instruct, u8 *send_datas)
+ 137          {
+ 138   1      }
+*** WARNING C280 IN LINE 136 OF ..\..\User\send_data.c: 'instruct': unreferenced local variable
+*** WARNING C280 IN LINE 136 OF ..\..\User\send_data.c: 'send_datas': unreferenced local variable
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    679    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      19
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,171 @@
+C51 COMPILER V9.60.7.0   MILEAGE                                                           06/05/2024 13:36:15 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MILEAGE
+OBJECT MODULE PLACED IN .\Release\Objects\mileage.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\mileage.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) INC
+                    -DIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\Release\Lis
+                    -tings\mileage.lst) TABS(2) OBJECT(.\Release\Objects\mileage.obj)
+
+line level    source
+
+   1          // Àï³Ì±íµÄÔ´³ÌÐò
+   2          #include "mileage.h"
+   3          
+   4          mileage_t mileage_info = {0}; // ´æ·ÅÀï³Ì±íµÄ½á¹¹Ìå±äÁ¿
+   5          
+   6          // Àï³Ì±íÅäÖÃ£¨³õÊ¼»¯£©
+   7          void mileage_config(void)
+   8          {
+   9   1          // ÏÈ´ÓflashÖÐ¶Á³öÀï³Ì
+  10   1          flash_read(0x00, (u8*)&mileage_info, sizeof(mileage_info));
+  11   1      }
+  12          
+  13          // ×ÜÀï³ÌÉ¨Ãè
+  14          void mileage_scan(void)
+  15          {
+  16   1      #ifdef INTERNATIONAL // ¹«ÖÆµ¥Î»
+  17   1      
+  18   1          static u32 old_total_mileage = 0;    // ÓÃÀ´¼ÇÂ¼¾ÉµÄ´ó¼ÆÀï³ÌµÄ±äÁ¿
+  19   1          static u32 old_subtotal_mileage = 0; // ÓÃÀ´¼ÇÂ¼¾ÉµÄÐ¡¼ÆÀï³ÌµÄ±äÁ¿
+  20   1      
+  21   1          static bit tmr_is_open = 0; // ¶¨Ê±Æ÷ÊÇ·ñ´ò¿ªµÄ±êÖ¾Î»
+  22   1      
+  23   1          if (0 == tmr_is_open)
+  24   1          {
+  25   2              tmr_is_open = 1;
+  26   2              tmr3_cnt = 0;
+  27   2              tmr3_enable();
+  28   2          }
+  29   1      
+  30   1          if (tmr3_cnt >= 3000)
+  31   1          {
+  32   2              // Ã¿30s½«´ó¼ÆÀï³ÌºÍÐ¡¼ÆÀï³ÌÐ´Èëflash
+  33   2              tmr3_disable();
+  34   2              tmr3_cnt = 0;
+  35   2              tmr_is_open = 0;
+  36   2      
+  37   2              flash_write(0x00, (u8 *)&mileage_info, sizeof(mileage_info));
+  38   2          }
+  39   1      
+  40   1          if (distance >= 1000)
+  41   1          {
+  42   2              // Èç¹û×ß¹ýµÄ¾àÀë³¬¹ýÁË1m£¬ÔÙ½øÐÐ±£´æ
+  43   2              mileage_info.total_mileage += distance / 1000;    // ½«ºÁÃ××ª»»³ÉÃ×£¬ÔÙ±£´æ
+  44   2              mileage_info.subtotal_mileage += distance / 1000; // ½«ºÁÃ××ª»»³ÉÃ×£¬ÔÙ±£´æ
+  45   2              distance %= 1000;                                 // Ê£ÏÂµÄ¡¢Î´±£´æµÄ¡¢²»Âú1mµÄÊý¾ÝÁôµ½ÏÂÒ»´ÎµÄ±£´
+             -æ
+  46   2          }
+  47   1      
+  48   1          if ((mileage_info.total_mileage - old_total_mileage) > 100)
+  49   1          {
+  50   2              // Èç¹û´ó¼ÆÀï³ÌÓÐ±ä»¯ÇÒ³¬¹ýÁË100m
+  51   2              old_total_mileage = mileage_info.total_mileage; // ¼ÇÂ¼¾ÉµÄÀï³Ì
+  52   2      
+C51 COMPILER V9.60.7.0   MILEAGE                                                           06/05/2024 13:36:15 PAGE 2   
+
+  53   2              printf("total mileage: %lum\n", mileage_info.total_mileage);
+  54   2      
+  55   2              {
+  56   3                  // ·¢ËÍÊý¾ÝµÄ²Ù×÷£¬¿ÉÒÔÏÈÖÃ±êÖ¾Î»
+  57   3                  // Òª×¢Òâ·¢ËÍµÄÊÇÎåÎ»µÄÕûÊý¡¢Ò»Î»µÄÐ¡Êý¡¢µ¥Î»ÎªKMµÄÊý¾Ý
+  58   3                  getTotalMileage = 1;
+  59   3              }
+  60   2          }
+  61   1      
+  62   1          if ((mileage_info.subtotal_mileage - old_subtotal_mileage) > 1000)
+  63   1          {
+  64   2              // Èç¹ûÐ¡¼ÆÀï³ÌÓÐ±ä»¯ÇÒ³¬¹ýÁË1000m
+  65   2              old_subtotal_mileage = mileage_info.subtotal_mileage; // ¼ÇÂ¼¾ÉµÄÀï³Ì
+  66   2      
+  67   2              printf("subtotal mileage: %lum\n", mileage_info.subtotal_mileage);
+  68   2      
+  69   2              {
+  70   3                  // ·¢ËÍÊý¾ÝµÄ²Ù×÷£¬¿ÉÒÔÏÈÖÃ±êÖ¾Î»
+  71   3                  // Òª×¢Òâ·¢ËÍµÄÊÇËÄÎ»µÄ¡¢µ¥Î»ÎªKMµÄÊý¾Ý
+  72   3                  getSubTotalMileage = 1;
+  73   3              }
+  74   2          }
+  75   1      
+  76   1      #endif // INTERNATIONAL ¹«ÖÆµ¥Î»
+  77   1      
+  78   1      #ifdef IMPERIAL // Ó¢ÖÆµ¥Î»
+              
+                  static u32 old_total_mileage = 0;    // ÓÃÀ´¼ÇÂ¼¾ÉµÄ´ó¼ÆÀï³ÌµÄ±äÁ¿
+                  static u32 old_subtotal_mileage = 0; // ÓÃÀ´¼ÇÂ¼¾ÉµÄÐ¡¼ÆÀï³ÌµÄ±äÁ¿
+              
+                  static bit tmr_is_open = 0; // ¶¨Ê±Æ÷ÊÇ·ñ´ò¿ªµÄ±êÖ¾Î»
+              
+                  if (0 == tmr_is_open)
+                  {
+                      tmr_is_open = 1;
+                      tmr3_cnt = 0;
+                      tmr3_enable();
+                  }
+              
+                  if (tmr3_cnt >= 3000)
+                  {
+                      // Ã¿30s½«´ó¼ÆÀï³ÌºÍÐ¡¼ÆÀï³ÌÐ´Èëflash
+                      tmr3_disable();
+                      tmr3_cnt = 0;
+                      tmr_is_open = 0;
+              
+                      flash_write(0x00, (u8 *)&mileage_info, sizeof(mileage_info));
+                  }
+              
+                  if (distance >= 1000)
+                  {
+                      // Èç¹û×ß¹ýµÄ¾àÀë³¬¹ýÁË1m£¬ÔÙ½øÐÐ±£´æ
+                      mileage_info.total_mileage += distance / 1000;    // ½«ºÁÃ××ª»»³ÉÃ×£¬ÔÙ±£´æ
+                      mileage_info.subtotal_mileage += distance / 1000; // ½«ºÁÃ××ª»»³ÉÃ×£¬ÔÙ±£´æ
+                      distance %= 1000;                                 // Ê£ÏÂµÄ¡¢Î´±£´æµÄ¡¢²»Âú1mµÄÊý¾ÝÁôµ½ÏÂÒ»´ÎµÄ±£´
+             -æ
+                  }
+              
+                  if ((mileage_info.total_mileage - old_total_mileage) > 161)
+                  {
+                      // Èç¹û´ó¼ÆÀï³ÌÓÐ±ä»¯ÇÒ³¬¹ýÁË161m£¬Ô¼0.1Ó¢Àï
+                      old_total_mileage = mileage_info.total_mileage; // ¼ÇÂ¼¾ÉµÄÀï³Ì
+C51 COMPILER V9.60.7.0   MILEAGE                                                           06/05/2024 13:36:15 PAGE 3   
+
+              
+                      // printf("total mileage: %lum\n", mileage_info.total_mileage);
+              
+                      {
+                          // ·¢ËÍÊý¾ÝµÄ²Ù×÷£¬¿ÉÒÔÏÈÖÃ±êÖ¾Î»
+                          // Òª×¢Òâ·¢ËÍµÄÊÇÎåÎ»µÄÕûÊý¡¢Ò»Î»µÄÐ¡Êý¡¢µ¥Î»ÎªÓ¢ÀïµÄÊý¾Ý
+              
+                          getTotalMileage = 1;
+                      }
+                  }
+              
+                  if ((mileage_info.subtotal_mileage - old_subtotal_mileage) > 1610)
+                  {
+                      // Èç¹ûÐ¡¼ÆÀï³ÌÓÐ±ä»¯ÇÒ³¬¹ýÁË1610m£¬Ô¼1Ó¢Àï
+                      old_subtotal_mileage = mileage_info.subtotal_mileage; // ¼ÇÂ¼¾ÉµÄÀï³Ì
+              
+                      // printf("subtotal mileage: %lum\n", mileage_info.subtotal_mileage);
+              
+                      {
+                          // ·¢ËÍÊý¾ÝµÄ²Ù×÷£¬¿ÉÒÔÏÈÖÃ±êÖ¾Î»
+                          // Òª×¢Òâ·¢ËÍµÄÊÇËÄÎ»µÄ¡¢µ¥Î»ÎªÓ¢ÀïµÄÊý¾Ý
+                          getSubTotalMileage = 1;
+                      }
+                  }
+              
+              #endif // IMPERIAL Ó¢ÖÆµ¥Î»
+ 140   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    355    ----
+   CONSTANT SIZE    =     45    ----
+   XDATA SIZE       =     16    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

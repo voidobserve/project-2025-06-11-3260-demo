@@ -1,0 +1,63 @@
+C51 COMPILER V9.60.7.0   TMR1                                                              07/03/2025 16:22:49 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR1
+OBJECT MODULE PLACED IN .\Release\Objects\tmr1.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\tmr1.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) IN
+                    -CDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware;..\..\Lowpower) INTERVAL(3) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Release\Listings\tmr1.lst) OBJECT(.\Release\Objects\tmr1.obj)
+
+line level    source
+
+   1          #include "tmr1.h"
+   2          
+   3          void timer1_pwm_config(void)
+   4          {
+   5   1          //  ÅäÖÃ P25 Îª PWM Êä³ö¶Ë¿Ú
+   6   1          P2_MD1 &= ~GPIO_P25_MODE_SEL(0x3);
+   7   1          P2_MD1 |= GPIO_P25_MODE_SEL(0x1); // Êä³öÄ£Ê½
+   8   1          FOUT_S25 = GPIO_FOUT_TMR1_PWMOUT;
+   9   1      
+  10   1          TMR_ALLCON = TMR1_CNT_CLR(0x1);                               // Çå³ý¼ÆÊýÖµ
+  11   1          TMR1_PRH = TMR_PERIOD_VAL_H((TIMER1_PEROID_VAL >> 8) & 0xFF); // ÖÜÆÚÖµ
+  12   1          TMR1_PRL = TMR_PERIOD_VAL_L((TIMER1_PEROID_VAL >> 0) & 0xFF);
+  13   1          TMR1_PWMH = TMR_PWM_VAL_H((((u32)TIMER1_PEROID_VAL * 0 / 100) >> 8) & 0xFF); // Õ¼¿Õ±ÈÉèÖÃÖµ
+  14   1          TMR1_PWML = TMR_PWM_VAL_L((((u32)TIMER1_PEROID_VAL * 0 / 100) >> 0) & 0xFF);
+  15   1          TMR1_CONH = TMR_PRD_PND(0x1) | TMR_PRD_IRQ_EN(0x1);  // Ê¹ÄÜ¼ÆÊýÖÐ¶Ï
+  16   1          TMR1_CONL = TMR_SOURCE_SEL(0x7) | TMR_MODE_SEL(0x2); // Ñ¡ÔñÏµÍ³Ê±ÖÓ£¬Ê±ÖÓÔ´²»·ÖÆµ£¬PWMÄ£Ê½
+  17   1      }
+  18          
+  19          void timer1_pwm_enable(void)
+  20          {
+  21   1          FOUT_S25 = GPIO_FOUT_TMR1_PWMOUT; // Êý×Ö¸´ÓÃ¹¦ÄÜÊä³ö
+  22   1          TMR1_CONL |= (0x02 << 0);         // PWMÄ£Ê½
+  23   1      }
+  24          
+  25          // ¹Ø±Õpwm£¬Òý½ÅÊä³öµÍµçÆ½
+  26          void timer1_pwm_disable(void)
+  27          {
+  28   1          TMR1_CONL &= ~(0x03 << 0);    // ²»Ê¹ÄÜ¶¨Ê±Æ÷¼ÆÊý
+  29   1          FOUT_S25 = GPIO_FOUT_AF_FUNC; // Êý×Ö¸´ÓÃ¹¦ÄÜÊä³ö
+  30   1          P25 = 0;
+  31   1      }
+  32          
+  33          void timer1_set_pwm_duty_val(u8 pwm_duty_val)
+  34          {
+  35   1          TMR1_PWMH = TMR_PWM_VAL_H((((u32)TIMER1_PEROID_VAL * pwm_duty_val / 255) >> 8) & 0xFF); // Õ¼¿Õ±ÈÉèÖÃÖ
+             -µ
+  36   1          TMR1_PWML = TMR_PWM_VAL_L((((u32)TIMER1_PEROID_VAL * pwm_duty_val / 255) >> 0) & 0xFF);
+  37   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    129    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,136 @@
+C51 COMPILER V9.60.7.0   TMR3                                                              12/09/2024 15:08:46 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR3
+OBJECT MODULE PLACED IN .\Release\Objects\tmr3.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\tmr3.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) IN
+                    -CDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware;..\..\Lowpower) INTERVAL(3) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Release\Listings\tmr3.lst) OBJECT(.\Release\Objects\tmr3.obj)
+
+line level    source
+
+   1          // 定时器TMR3的驱动源文件
+   2          #include "tmr3.h"
+   3          
+   4          #define TMR3_CNT_TIME (SYSCLK / 32 / 1000 - 1) // 计数周期 1KHz，1ms产生一次中断
+   5          
+   6          volatile u32 tmr3_cnt = 0; // 定时器TMR3的计数值（每次在中断服务函数中会加一）
+   7          // volatile bit tmr3_flag = 0; // tmr3中断服务函数中会置位的标志位
+   8          
+   9          // 定时器TMR3的初始化（初始化完成后，默认是关闭的）
+  10          void tmr3_config(void)
+  11          {
+  12   1          __SetIRQnIP(TMR3_IRQn, TMR3_IQn_CFG); // 设置中断优先级（TMR3）
+  13   1      
+  14   1          TMR3_CONL &= ~TMR_PRESCALE_SEL(0x07); // 清除TMR3的预分频配置寄存器
+  15   1          TMR3_CONL |= TMR_PRESCALE_SEL(0x05);  // 配置分频系数
+  16   1          TMR3_CONL &= ~TMR_MODE_SEL(0x03);     // 清除TMR3的模式配置寄存器
+  17   1          TMR3_CONL |= TMR_MODE_SEL(0x01);      // 配置TMR3的模式为计数器模式，最后对系统时钟的脉冲进行计数
+  18   1      
+  19   1          TMR3_CONH &= ~TMR_PRD_PND(0x01); // 清除TMR3的计数标志位，表示未完成计数
+  20   1          TMR3_CONH |= TMR_PRD_IRQ_EN(1);  // 使能TMR3的计数中断
+  21   1      
+  22   1          __DisableIRQ(TMR3_IRQn); // 禁用中断
+  23   1      
+  24   1          // 配置TMR3的计数周期
+  25   1          TMR3_PRL = (unsigned char)(TMR3_CNT_TIME % 255);
+  26   1          TMR3_PRH = (unsigned char)(TMR3_CNT_TIME / 255);
+  27   1      
+  28   1          // 清除TMR3的计数值
+  29   1          // TMR3_CNTL = 0;
+  30   1          // TMR3_CNTH = 0;
+  31   1          TMR_ALLCON = TMR3_CNT_CLR(0x1); // 清除计数值(写1清零)
+  32   1      
+  33   1          TMR3_CONL &= ~(TMR_SOURCE_SEL(0x07)); // 清除TMR3的时钟源配置寄存器
+  34   1          // TMR3_CONL |= TMR_SOURCE_SEL(0x07); // 配置TMR3的时钟源，使用系统时钟
+  35   1          TMR3_CONL |= TMR_SOURCE_SEL(0x05); // 配置TMR3的时钟源，不用任何时钟
+  36   1          // __EnableIRQ(TMR3_IRQn);                     // 使能中断
+  37   1          IE_EA = 1; // 打开总中断
+  38   1      }
+  39          
+  40          // 开启定时器TMR3，开始计时
+  41          void tmr3_enable(void)
+  42          {
+  43   1          // 重新给TMR3配置时钟
+  44   1          TMR3_CONL &= ~(TMR_SOURCE_SEL(0x07)); // 清除定时器的时钟源配置寄存器
+  45   1          TMR3_CONL |= TMR_SOURCE_SEL(0x06);    // 配置定时器的时钟源，使用系统时钟 
+  46   1      
+  47   1          __EnableIRQ(TMR3_IRQn); // 使能中断
+  48   1          IE_EA = 1;              // 打开总中断
+  49   1      }
+  50          
+  51          // 关闭定时器，清空计数值
+  52          void tmr3_disable(void)
+  53          {
+C51 COMPILER V9.60.7.0   TMR3                                                              12/09/2024 15:08:46 PAGE 2   
+
+  54   1          // 不给定时器提供时钟，让它停止计数
+  55   1          TMR3_CONL &= ~(TMR_SOURCE_SEL(0x07)); // 清除定时器的时钟源配置寄存器
+  56   1          TMR3_CONL |= TMR_SOURCE_SEL(0x05);    // 配置定时器的时钟源，不用任何时钟
+  57   1      
+  58   1          // 清除定时器的计数值
+  59   1          // TMR3_CNTL = 0;
+  60   1          // TMR3_CNTH = 0;
+  61   1           TMR_ALLCON = TMR3_CNT_CLR(0x1); // 清除计数值(写1清零)
+  62   1      
+  63   1          __DisableIRQ(TMR3_IRQn); // 关闭中断（不使能中断）
+  64   1      }
+  65          
+  66          // TMR3中断服务函数
+  67          void TIMR3_IRQHandler(void) interrupt TMR3_IRQn
+  68          {
+  69   1      #if 1 // 定时器的定时中断
+  70   1          // 进入中断设置IP，不可删除
+  71   1          __IRQnIPnPush(TMR3_IRQn);
+  72   1      
+  73   1          // ---------------- 用户函数处理 -------------------
+  74   1          // 周期中断
+  75   1          if (TMR3_CONH & TMR_PRD_PND(0x1))
+  76   1          {
+  77   2              TMR3_CONH |= TMR_PRD_PND(0x1); // 清除pending
+  78   2      
+  79   2              tmr3_cnt++;
+  80   2          }
+  81   1      
+  82   1          // 退出中断设置IP，不可删除
+  83   1          __IRQnIPnPop(TMR3_IRQn);
+  84   1      #endif
+  85   1      
+  86   1      #if 0 // 定时器的输入捕获中断
+              
+                  // 进入中断设置IP，不可删除
+                  __IRQnIPnPush(TMR3_IRQn);
+              
+                  // ---------------- 用户函数处理 -------------------
+              
+                  if (TMR3_CONH & TMR_CAP_PND(0x1))
+                  {
+                      TMR3_CONH |= TMR_CAP_PND(0x1); // 清除pending
+              
+                      tmr3_cap_val    = ((TMR3_PWMH << 8) | TMR3_PWML); // 读取捕获的值
+                      tmr3_cnt++; // 脉冲计数值加一
+              
+                      TMR_ALLCON = TMR3_CNT_CLR(0x1); // 清除计数值
+                  }
+              
+                  // 退出中断设置IP，不可删除
+                  __IRQnIPnPop(TMR3_IRQn);
+              
+              #endif
+ 107   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    179    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      4    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+C51 COMPILER V9.60.7.0   TMR3                                                              12/09/2024 15:08:46 PAGE 3   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

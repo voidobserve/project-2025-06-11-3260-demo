@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "my_config.h": "c",
+        "include.h": "c"
+    }
+}

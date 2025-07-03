@@ -1,0 +1,1 @@
+"..\..\Lowpower\stop_mode.c" LARGE OPTIMIZE (8,SIZE) BROWSE INTVECTOR(0x000C) INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware;..\..\Lowpower) interval(3) DEBUG OBJECTEXTEND PRINT(.\Release\Listings\stop_mode.lst) OBJECT(.\Release\Objects\stop_mode.obj)

@@ -1,0 +1,42 @@
+{
+    "configurations": [
+        {
+            "name": "Target 1",
+            "includePath": [
+                "c:\\Users\\PC\\AppData\\Local\\A_WorkSt\\Aworkst\\2024-05-项目3-泰芯3260-摩托车仪表项目\\code\\project\\Libraries\\Include",
+                "c:\\Users\\PC\\AppData\\Local\\A_WorkSt\\Aworkst\\2024-05-项目3-泰芯3260-摩托车仪表项目\\code\\project\\User",
+                "c:\\Users\\PC\\AppData\\Local\\A_WorkSt\\Aworkst\\2024-05-项目3-泰芯3260-摩托车仪表项目\\code\\project\\User\\lib",
+                "c:\\Users\\PC\\AppData\\Local\\A_WorkSt\\Aworkst\\2024-05-项目3-泰芯3260-摩托车仪表项目\\code\\project\\Hardware",
+                "C:\\Keil_v5\\C51\\INC",
+                "c:\\Users\\PC\\AppData\\Local\\A_WorkSt\\Aworkst\\2024-05-项目3-泰芯3260-摩托车仪表项目\\code\\project\\Libraries\\Startup",
+                "c:\\Users\\PC\\AppData\\Local\\A_WorkSt\\Aworkst\\2024-05-项目3-泰芯3260-摩托车仪表项目\\code\\project\\Libraries\\Source"
+            ],
+            "defines": [
+                "__C51__",
+                "__VSCODE_C51__",
+                "reentrant=",
+                "compact=",
+                "small=",
+                "large=",
+                "data=",
+                "idata=",
+                "pdata=",
+                "bdata=",
+                "xdata=",
+                "code=",
+                "bit=char",
+                "sbit=char",
+                "sfr=char",
+                "sfr16=int",
+                "sfr32=int",
+                "interrupt=",
+                "using=",
+                "_at_=",
+                "_priority_=",
+                "_task_="
+            ],
+            "intelliSenseMode": "${default}"
+        }
+    ],
+    "version": 4
+}

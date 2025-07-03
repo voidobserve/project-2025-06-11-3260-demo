@@ -1,0 +1,110 @@
+C51 COMPILER V9.60.7.0   UART1                                                             06/06/2024 17:04:34 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART1
+OBJECT MODULE PLACED IN .\Release\Objects\uart1.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\uart1.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) I
+                    -NCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware;..\..\Lowpower) INTERVAL(3) DEBUG OBJECTEXTEND PR
+                    -INT(.\Release\Listings\uart1.lst) TABS(2) OBJECT(.\Release\Objects\uart1.obj)
+
+line level    source
+
+   1          // 不能使用UART1+DMA来接收不定长的数据，这里的代码不能用
+   2          #include "uart1.h"
+   3          #if USE_UART1
+   4          
+   5          // 设置的波特率需要适配单片机的时钟，这里直接使用了官方的代码
+   6          #define USER_UART1_BAUD ((SYSCLK - UART1_BAUDRATE) / (UART1_BAUDRATE))
+   7          
+   8          // 用来存放接收的数据帧的缓冲区
+   9          volatile u8 uart1_recv_buf[UART1_RXBUF_LEN] = {0};
+  10          volatile u16 uart1_recv_cnt = 0;  // 接收缓冲区计数值
+  11          volatile bit uart1_recv_flag = 0; // 接收完成一帧的标志位
+  12          
+  13          /*
+  14              // 使用示例
+  15              if (uart1_recv_flag)
+  16              {
+  17                  uart1_recv_flag = 0;
+  18                  printf("%s\n", uart1_recv_buf);
+  19                  memset(uart1_recv_buf, 0, UART1_RXBUF_LEN);
+  20                  uart1_recv_cnt = 0;
+  21              }
+  22          */
+  23          
+  24          #if USE_PRINTF_UART1
+  25          // 重写putchar()函数
+  26          char putchar(char c)
+  27          {
+  28   1          uart1_sendbyte(c); // 调用串口1的单个字节发送函数
+  29   1          return c;
+  30   1      }
+  31          #endif // USE_PRINTF_UART1
+  32          
+  33          void uart1_config(void)
+  34          {
+  35   1          // 电路板上，P11为发送引脚，P12为接收引脚
+  36   1          P1_MD0 &= (~GPIO_P11_MODE_SEL(0x3) | ~GPIO_P12_MODE_SEL(0x3));
+  37   1          P1_MD0 |= GPIO_P11_MODE_SEL(0x1); // 输出模式
+  38   1          FOUT_S11 |= GPIO_FOUT_UART1_TX;   // 配置P11为UART1_TX
+  39   1          FIN_S8 |= GPIO_FIN_SEL_P12;       // 配置P12为UART1_RX
+  40   1      
+  41   1          __EnableIRQ(UART1_IRQn); // 打开UART模块中断
+  42   1          IE_EA = 1;               // 打开总中断
+  43   1      
+  44   1          UART1_BAUD1 = (USER_UART1_BAUD >> 8) & 0xFF; // 配置波特率高八位
+  45   1          UART1_BAUD0 = USER_UART1_BAUD & 0xFF;        // 配置波特率低八位
+  46   1          UART1_CON0 = UART_STOP_BIT(0x0) |
+  47   1                       UART_RX_IRQ_EN(0x1) |
+  48   1                       UART_EN(0x1); // 8bit数据，1bit停止位，使能接收中断，使能串口
+  49   1      }
+  50          
+  51          // UART1发送一个字节数据的函数
+  52          void uart1_sendbyte(u8 senddata)
+  53          {
+C51 COMPILER V9.60.7.0   UART1                                                             06/06/2024 17:04:34 PAGE 2   
+
+  54   1          while (!(UART1_STA & UART_TX_DONE(0x01))) // 等待前一次发送完成
+  55   1              ;
+  56   1          UART1_DATA = senddata;
+  57   1          while (!(UART1_STA & UART_TX_DONE(0x01))) // 等待这次发送完成
+  58   1              ;
+  59   1      }
+  60          
+  61          // UART1中断服务函数（DMA接收满才会触发该中断）
+  62          void UART1_IRQHandler(void) interrupt UART1_IRQn
+  63          {
+  64   1          // 进入中断设置IP，不可删除
+  65   1          __IRQnIPnPush(UART1_IRQn);
+  66   1      
+  67   1          // ---------------- 用户函数处理 -------------------
+  68   1      
+  69   1          // RX接收完成中断
+  70   1          if (UART1_STA & UART_RX_DONE(0x1))
+  71   1          {
+  72   2              uart1_recv_buf[uart1_recv_cnt++] = UART1_DATA;
+  73   2              if (UART1_DATA == '\n')
+  74   2              {
+  75   3                  uart1_recv_flag = 1;
+  76   3              }
+  77   2          }
+  78   1      
+  79   1          // 退出中断设置IP，不可删除
+  80   1          __IRQnIPnPop(UART1_IRQn);
+  81   1      }
+  82          
+  83          #endif // USE_UART1
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    133    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     52       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

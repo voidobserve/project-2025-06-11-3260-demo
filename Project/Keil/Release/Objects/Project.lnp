@@ -1,0 +1,11 @@
+".\Release\Objects\STARTUP.obj",
+".\Release\Objects\system.obj",
+".\Release\Objects\tmr0.obj",
+".\Release\Objects\tmr1.obj",
+".\Release\Objects\adc.obj",
+".\Release\Objects\uart0.obj",
+".\Release\Objects\main.obj" 
+TO ".\Release\Objects\Project" 
+PRINT(".\Release\Listings\Project.m51") RAMSIZE(256) 
+CODE( 0X0000-0X3EEF )
+XDATA( 0X6000-0X66FF )

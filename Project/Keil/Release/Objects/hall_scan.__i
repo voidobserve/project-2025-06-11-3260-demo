@@ -1,0 +1,1 @@
+"..\..\User\hall_scan.c" LARGE OPTIMIZE (8,SPEED) BROWSE INTVECTOR(0x000C) INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) interval(3) DEBUG OBJECTEXTEND PRINT(.\Release\Listings\hall_scan.lst) TABS (2) OBJECT(.\Release\Objects\hall_scan.obj)

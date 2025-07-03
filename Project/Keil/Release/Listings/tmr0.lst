@@ -1,0 +1,76 @@
+C51 COMPILER V9.60.7.0   TMR0                                                              07/03/2025 16:22:49 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR0
+OBJECT MODULE PLACED IN .\Release\Objects\tmr0.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\tmr0.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) IN
+                    -CDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware;..\..\Lowpower) INTERVAL(3) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Release\Listings\tmr0.lst) OBJECT(.\Release\Objects\tmr0.obj)
+
+line level    source
+
+   1          #include "tmr0.h"
+   2          
+   3          extern volatile bit flag_is_adjust_pwm_time_comes;
+   4          
+   5          /**
+   6           * @brief ≈‰÷√∂® ±∆˜TMR0
+   7           */
+   8          void timer0_config(void)
+   9          {
+  10   1          __EnableIRQ(TMR0_IRQn); //  πƒ‹timer0÷–∂œ
+  11   1          IE_EA = 1;              //  πƒ‹◊‹÷–∂œ
+  12   1      
+  13   1          // …Ë÷√timer0µƒº∆ ˝π¶ƒ‹£¨≈‰÷√“ª∏ˆ∆µ¬ Œ™1kHzµƒ÷–∂œ
+  14   1          TMR_ALLCON = TMR0_CNT_CLR(0x1);                               // «Â≥˝º∆ ˝÷µ
+  15   1          TMR0_PRH = TMR_PERIOD_VAL_H((TIMER0_PERIOD_VAL >> 8) & 0xFF); // ÷‹∆⁄÷µ
+  16   1          TMR0_PRL = TMR_PERIOD_VAL_L((TIMER0_PERIOD_VAL >> 0) & 0xFF);
+  17   1          TMR0_CONH = TMR_PRD_PND(0x1) | TMR_PRD_IRQ_EN(0x1);                          // º∆ ˝µ»”⁄÷‹∆⁄ ±‘ –Ì∑¢…˙
+             -÷–∂œ
+  18   1          TMR0_CONL = TMR_SOURCE_SEL(0x7) | TMR_PRESCALE_SEL(0x7) | TMR_MODE_SEL(0x1); // —°‘ÒœµÕ≥ ±÷”£¨128∑÷∆µ£
+             -¨º∆ ˝ƒ£ Ω
+  19   1      }
+  20          
+  21          // TMR0÷–∂œ∑˛ŒÒ∫Ø ˝
+  22          void TIMR0_IRQHandler(void) interrupt TMR0_IRQn
+  23          {
+  24   1          // Ω¯»Î÷–∂œ…Ë÷√IP£¨≤ªø……æ≥˝
+  25   1          __IRQnIPnPush(TMR0_IRQn);
+  26   1      
+  27   1          // ---------------- ”√ªß∫Ø ˝¥¶¿Ì -------------------
+  28   1      
+  29   1          // ÷‹∆⁄÷–∂œ
+  30   1          if (TMR0_CONH & TMR_PRD_PND(0x1))
+  31   1          {
+  32   2              TMR0_CONH |= TMR_PRD_PND(0x1); // «Â≥˝pending
+  33   2      
+  34   2              {
+  35   3                  static u16 cnt = 0;
+  36   3                  cnt++;
+  37   3                  if (cnt >= 100)
+  38   3                  {
+  39   4                      cnt = 0;
+  40   4                      flag_is_adjust_pwm_time_comes = 1;
+  41   4                  }
+  42   3              }
+  43   2          }
+  44   1      
+  45   1          // ÕÀ≥ˆ÷–∂œ…Ë÷√IP£¨≤ªø……æ≥˝
+  46   1          __IRQnIPnPop(TMR0_IRQn);
+  47   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     96    ----
+C51 COMPILER V9.60.7.0   TMR0                                                              07/03/2025 16:22:49 PAGE 2   
+
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,129 @@
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 06/05/2024 13:36:15 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ENGINE_SPEED_SCAN
+OBJECT MODULE PLACED IN .\Release\Objects\engine_speed_scan.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\engine_speed_scan.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0
+                    -X000C) INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\R
+                    -elease\Listings\engine_speed_scan.lst) TABS(2) OBJECT(.\Release\Objects\engine_speed_scan.obj)
+
+line level    source
+
+   1          #include "engine_speed_scan.h"
+   2          
+   3          // 发动机每转一圈，能检测到的脉冲个数
+   4          #ifndef ENGINE_PULSE_PER_TURN
+   5          #define ENGINE_PULSE_PER_TURN 16
+   6          #endif
+   7          
+   8          static volatile u32 pulse_cnt = 0; // 脉冲计数值
+   9          
+  10          // 发动机转速的相关配置，这里用P23来检测霍尔传感器的脉冲
+  11          void engine_speed_scan_config(void)
+  12          {
+  13   1          // 使用IO中断来对脉冲计数
+  14   1          __SetIRQnIP(P2_IRQn, P2_IQn_CFG); // 设置中断优先级
+  15   1          __EnableIRQ(P2_IRQn);             // 使能P2中断
+  16   1          IE_EA = 1;                        // 使能总开关
+  17   1      
+  18   1          P2_MD0 &= ~GPIO_P23_MODE_SEL(0x3); // 输入模式
+  19   1          P2_PD |= GPIO_P23_PULL_PD(0x1);    // 配置为下拉
+  20   1          P2_IMK |= GPIO_P23_IRQ_MASK(0x1);  // 使能IO中断
+  21   1          P2_TRG0 &= ~GPIO_P23_TRG_SEL(0x3);
+  22   1          P2_TRG0 |= GPIO_P23_TRG_SEL(0x2); // 配置上升沿触发
+  23   1      }
+  24          
+  25          // // 获取250ms内转过的圈数
+  26          // static u32 get_turns_per_250ms(void)
+  27          // {
+  28          //     u32 turns = 0;
+  29          
+  30          //     pulse_cnt = 0;
+  31          //     tmr1_enable();
+  32          
+  33          //     while (tmr1_cnt < 2500)
+  34          //     {
+  35          //     }; // 等待250ms
+  36          
+  37          //     turns = pulse_cnt / ENGINE_PULSE_PER_TURN; // 计算出每250ms转了多少圈
+  38          //     // printf("pulse_cnt: %ld\n", pulse_cnt);
+  39          
+  40          //     // printf("tmr1_cnt: %ld\n", tmr1_cnt); // 测试
+  41          //     tmr1_disable();
+  42          //     tmr1_cnt = 0;
+  43          
+  44          //     // printf("turns per 250ms: %f\n", turns);
+  45          
+  46          //     return turns;
+  47          // }
+  48          
+  49          // 获取发动机每分钟转速
+  50          u32 get_engine_speed_rpm(void)
+  51          {
+  52   1          // return (get_turns_per_250ms() * 4 * 60);
+  53   1      
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 06/05/2024 13:36:15 PAGE 2   
+
+  54   1          u32 tmp = 0;
+  55   1          pulse_cnt = 0;
+  56   1          tmr1_cnt = 0;
+  57   1          tmr1_enable();
+  58   1          __EnableIRQ(P2_IRQn); // 使能P2中断
+  59   1      
+  60   1          while (tmr1_cnt < 2500)
+  61   1          {
+  62   2          }; // 等待250ms
+  63   1      
+  64   1          // 计算出每min(250ms * 4 * 60 == 1min)转了多少圈
+  65   1          tmp = pulse_cnt * 240 / ENGINE_PULSE_PER_TURN; 
+  66   1      
+  67   1          tmr1_disable();
+  68   1          __DisableIRQ(P2_IRQn); // 禁用P2中断
+  69   1          tmr1_cnt = 0;
+  70   1          pulse_cnt = 0;
+  71   1      
+  72   1          return tmp;
+  73   1      }
+  74          
+  75          // 发动机转速扫描
+  76          void engine_speed_scan(void)
+  77          {
+  78   1          u32 rpm = get_engine_speed_rpm();
+  79   1          printf("rpm: %lu\n", rpm);
+  80   1      
+  81   1          fun_info.engine_speeed = rpm;
+  82   1          getEngineSpeed = 1;
+  83   1      }
+  84          
+  85          // P2中断服务函数
+  86          void P2_IRQHandler(void) interrupt P2_IRQn
+  87          {
+  88   1          // Px_PND寄存器写任何值都会清标志位
+  89   1          u8 p2_pnd = P2_PND;
+  90   1      
+  91   1          // 进入中断设置IP，不可删除
+  92   1          __IRQnIPnPush(P2_IRQn);
+  93   1          // ---------------- 用户函数处理 -------------------
+  94   1          if (p2_pnd & GPIO_P23_IRQ_PNG(0x1))
+  95   1          {
+  96   2              pulse_cnt++;
+  97   2          }
+  98   1          P2_PND = p2_pnd; // 清P2中断标志位
+  99   1          // -------------------------------------------------
+ 100   1          // 退出中断设置IP，不可删除
+ 101   1          __IRQnIPnPop(P2_IRQn);
+ 102   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    287    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =      4       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

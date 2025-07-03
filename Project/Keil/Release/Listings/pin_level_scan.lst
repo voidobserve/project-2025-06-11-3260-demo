@@ -1,0 +1,192 @@
+C51 COMPILER V9.60.7.0   PIN_LEVEL_SCAN                                                    06/05/2024 13:36:14 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE PIN_LEVEL_SCAN
+OBJECT MODULE PLACED IN .\Release\Objects\pin_level_scan.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\pin_level_scan.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X00
+                    -0C) INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\Rele
+                    -ase\Listings\pin_level_scan.lst) TABS(2) OBJECT(.\Release\Objects\pin_level_scan.obj)
+
+line level    source
+
+   1          #include "pin_level_scan.h"
+   2          
+   3          void pin_level_scan_config(void)
+   4          {
+   5   1          // p17_input_config(); // 左转向灯状态对应的引脚，目前因为飞线，无法测量
+   6   1          p21_input_config(); // 远光灯状态对应的引脚
+   7   1          p22_input_config(); // 右转向灯状态对应的引脚
+   8   1          p23_input_config(); // 刹车状态对应的引脚
+   9   1      
+  10   1          p30_input_config(); // 6档对应的引脚
+  11   1          p31_input_config(); // 5档对应的引脚
+  12   1          p14_input_config(); // 4档对应的引脚
+  13   1          p13_input_config(); // 3档对应的引脚
+  14   1          p10_input_config(); // 2档对应的引脚
+  15   1          p07_input_config(); // 1档对应的引脚
+  16   1          p06_input_config(); // 空挡对应的引脚
+  17   1      }
+  18          
+  19          // 引脚电平扫描，都是低电平有效
+  20          void pin_level_scan(void)
+  21          {
+  22   1          if (P23 == 0)
+  23   1          {
+  24   2              // 如果 刹车
+  25   2      
+  26   2              // printf("P23 == 0\n");
+  27   2              if (OFF == fun_info.brake)
+  28   2              {
+  29   3                  // 如果之前刹车是关闭的
+  30   3                  getBrake = 1;
+  31   3                  fun_info.brake = ON;
+  32   3              }
+  33   2              else
+  34   2              {
+  35   3                  // 如果刹车在上一次扫描时就是开启的
+  36   3                  // 不用更新状态
+  37   3              }
+  38   2          }
+  39   1          else
+  40   1          {
+  41   2              // 如果现在刹车是关闭的，看看上一次扫描时刹车是否开启，
+  42   2              // 如果上一次扫描时是开启的，要发送刹车关闭的信息
+  43   2              if (ON == fun_info.brake)
+  44   2              {
+  45   3                  fun_info.brake = OFF;
+  46   3                  getBrake = 1;
+  47   3              }
+  48   2          }
+  49   1      
+  50   1          if (P22 == 0)
+  51   1          {
+  52   2              // 如果 右转向灯开启
+  53   2              // printf("P22 == 0\n");
+C51 COMPILER V9.60.7.0   PIN_LEVEL_SCAN                                                    06/05/2024 13:36:14 PAGE 2   
+
+  54   2              if (OFF == fun_info.right_turn)
+  55   2              {
+  56   3                  // 如果上一次扫描时右转向灯是关闭的
+  57   3                  fun_info.right_turn = ON;
+  58   3                  getRightTurn = 1;
+  59   3              }
+  60   2          }
+  61   1          else
+  62   1          {
+  63   2              if (ON == fun_info.right_turn)
+  64   2              {
+  65   3                  // 如果上一次扫描时右转向灯是开启的
+  66   3                  fun_info.right_turn = OFF;
+  67   3                  getRightTurn = 1;
+  68   3              }
+  69   2          }
+  70   1      
+  71   1          if (P21 == 0)
+  72   1          {
+  73   2              // 如果 远光灯开启
+  74   2              // printf("P21 == 0\n");
+  75   2      
+  76   2              if (OFF == fun_info.high_beam)
+  77   2              {
+  78   3                  // 如果上一次扫描时远光灯是关闭的
+  79   3                  fun_info.high_beam = ON;
+  80   3                  getHighBeam = 1;
+  81   3              }
+  82   2          }
+  83   1          else
+  84   1          {
+  85   2              if (ON == fun_info.high_beam)
+  86   2              {
+  87   3                  // 如果上一次扫描时远光灯是开启的
+  88   3                  fun_info.high_beam = OFF;
+  89   3                  getHighBeam = 1;
+  90   3              }
+  91   2          }
+  92   1      
+  93   1          // if (P17 == 0)
+  94   1          // {
+  95   1          //     printf("P17 == 0\n");
+  96   1          // }
+  97   1      
+  98   1          // 以最低挡位优先，当最低档有信号时，不管其他挡位的信号，直接以最低档的为主
+  99   1          if (0 == P06)
+ 100   1          {
+ 101   2              if (GEAR_NEUTRAL != fun_info.gear)
+ 102   2              {
+ 103   3                  // 如果上一次扫描时的挡位不是空挡
+ 104   3                  fun_info.gear = GEAR_NEUTRAL;
+ 105   3                  getGear = 1;
+ 106   3              }
+ 107   2          }
+ 108   1          else if (0 == P07)
+ 109   1          {
+ 110   2              if (GEAR_FIRST != fun_info.gear)
+ 111   2              {
+ 112   3                  // 如果上一次扫描时的挡位不是一档
+ 113   3                  fun_info.gear = GEAR_FIRST;
+ 114   3                  getGear = 1;
+ 115   3              }
+C51 COMPILER V9.60.7.0   PIN_LEVEL_SCAN                                                    06/05/2024 13:36:14 PAGE 3   
+
+ 116   2          }
+ 117   1          else if (0 == P10)
+ 118   1          {
+ 119   2              if (GEAR_SECOND != fun_info.gear)
+ 120   2              {
+ 121   3                  // 如果上一次扫描时的挡位不是二档
+ 122   3                  fun_info.gear = GEAR_SECOND;
+ 123   3                  getGear = 1;
+ 124   3              }
+ 125   2          }
+ 126   1          else if (0 == P13)
+ 127   1          {
+ 128   2              if (GEAR_THIRD != fun_info.gear)
+ 129   2              {
+ 130   3                  // 如果上一次扫描时的挡位不是三档
+ 131   3                  fun_info.gear = GEAR_THIRD;
+ 132   3                  getGear = 1;
+ 133   3              }
+ 134   2          }
+ 135   1          else if (0 == P14)
+ 136   1          {
+ 137   2              if (GEAR_FOURTH != fun_info.gear)
+ 138   2              {
+ 139   3                  // 如果上一次扫描时的挡位不是四档
+ 140   3                  fun_info.gear = GEAR_FOURTH;
+ 141   3                  getGear = 1;
+ 142   3              }
+ 143   2          }
+ 144   1          else if (0 == P31)
+ 145   1          {
+ 146   2              if (GEAR_FIFTH != fun_info.gear)
+ 147   2              {
+ 148   3                  // 如果上一次扫描时的挡位不是五档
+ 149   3                  fun_info.gear = GEAR_FIFTH;
+ 150   3                  getGear = 1;
+ 151   3              }
+ 152   2          }
+ 153   1          else if (0 == P30)
+ 154   1          {
+ 155   2              // printf("P30 == 0\n");
+ 156   2              if (GEAR_SIXTH != fun_info.gear)
+ 157   2              {
+ 158   3                  // 如果上一次扫描时的挡位不是六档
+ 159   3                  fun_info.gear = GEAR_SIXTH;
+ 160   3                  getGear = 1;
+ 161   3              }
+ 162   2          }
+ 163   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    206    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

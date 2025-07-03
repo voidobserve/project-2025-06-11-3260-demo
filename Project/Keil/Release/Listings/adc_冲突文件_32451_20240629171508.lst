@@ -1,0 +1,108 @@
+C51 COMPILER V9.60.7.0   ADC                                                               06/06/2024 17:04:34 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Release\Objects\adc.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\adc.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) INC
+                    -DIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware;..\..\Lowpower) INTERVAL(3) DEBUG OBJECTEXTEND PRIN
+                    -T(.\Release\Listings\adc.lst) TABS(2) OBJECT(.\Release\Objects\adc.obj)
+
+line level    source
+
+   1          #include "adc.h"
+   2          
+   3          volatile u16 adc_val = 0;       // adc值，0~4095
+   4          volatile bit adc_done_flag = 0; // adc转换完成标志
+   5          
+   6          // adc配置
+   7          void adc_config(void)
+   8          {
+   9   1          // 配置P23为模拟输入模式
+  10   1          P2_MD0 |= GPIO_P23_MODE_SEL(0x3); // 设为模拟模式
+  11   1      
+  12   1          // ADC配置
+  13   1          ADC_ACON1 &= ~(ADC_VREF_SEL(0x7) | ADC_EXREF_SEL(0x1)); // 清除电压选择，关闭外部参考电压
+  14   1          ADC_ACON1 &= ~(ADC_INREF_SEL(0x01));                    // 关闭内部参考电压
+  15   1          ADC_ACON1 |= ADC_VREF_SEL(0x06) | ADC_TEN_SEL(0x3);     // 选择内部参考电压VCCA，关闭测试信号
+  16   1      
+  17   1          ADC_ACON0 = ADC_CMP_EN(0x1) |      // 打开ADC中的CMP使能信号
+  18   1                      ADC_BIAS_EN(0x1) |     // 打开ADC偏置电流能使信号
+  19   1                      ADC_BIAS_SEL(0x1);     // 偏置电流选择：1x
+  20   1          ADC_CHS0 = ADC_ANALOG_CHAN(0x13) | // P23通路
+  21   1                     ADC_EXT_SEL(0x0);       // 选择外部通路（引脚作为通道）
+  22   1          ADC_CFG0 |= ADC_CHAN0_EN(0x1) |    // 使能通道0转换
+  23   1                      ADC_EN(0x1);           // 使能A/D转换
+  24   1          delay_ms(1);                       // 等待ADC模块配置稳定，需要等待20us以上
+  25   1      }
+  26          
+  27          // void adc_showval(void)
+  28          // {
+  29          //     ADC_CFG0 |= ADC_CHAN0_TRG(0x1); // 触发ADC0转换
+  30          //     while (!(ADC_STA & ADC_CHAN0_DONE(0x1)))
+  31          //         ;                                            // 等待转换完成
+  32          //     ADC_STA = ADC_CHAN0_DONE(0x1);                   // 清除ADC0转换完成标志位
+  33          //     adc_val = (ADC_DATAH0 << 4) | (ADC_DATAL0 >> 4); // 读取ADC0的值
+  34          
+  35          //     // 连接串口查看ADC值
+  36          //     printf("adc_val = %d\r\n", adc_val);
+  37          //     delay_ms(500);
+  38          // }
+  39          
+  40          // 获取adc值，存放到变量adc_val中
+  41          u16 adc_getval(void)
+  42          {
+  43   1          ADC_CFG0 |= ADC_CHAN0_TRG(0x1); // 触发ADC0转换
+  44   1          while (!(ADC_STA & ADC_CHAN0_DONE(0x1)))
+  45   1              ;                                           // 等待转换完成
+  46   1          ADC_STA = ADC_CHAN0_DONE(0x1);                  // 清除ADC0转换完成标志位
+  47   1          return ((ADC_DATAH0 << 4) | (ADC_DATAL0 >> 4)); // 读取ADC0的值
+  48   1      }
+  49          
+  50          // adc滤波
+  51          void adc_filter(void)
+  52          {
+  53   1          u8 i = 0;
+C51 COMPILER V9.60.7.0   ADC                                                               06/06/2024 17:04:34 PAGE 2   
+
+  54   1          u32 tmp;
+  55   1          for (i = 0; i < 32; i++)
+  56   1          {
+  57   2              tmp += adc_getval();
+  58   2      
+  59   2              if (i >= 1)
+  60   2              {
+  61   3                  tmp >>= 1; // 相当于tmp /= 2;
+  62   3              }
+  63   2          }
+  64   1      
+  65   1          adc_val = (u16)tmp;
+  66   1      }
+  67          
+  68          // 切换adc采集的引脚
+  69          void adc_switch_pin()
+  70          {
+  71   1      
+  72   1      }
+  73          
+  74          void adc_showval(void)
+  75          {
+  76   1          adc_filter();
+  77   1      
+  78   1          // 连接串口查看ADC值
+  79   1          printf("adc_val = %d\r\n", adc_val);
+  80   1          delay_ms(500);
+  81   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    203    ----
+   CONSTANT SIZE    =     15    ----
+   XDATA SIZE       =      2       5
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

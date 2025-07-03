@@ -1,0 +1,145 @@
+C51 COMPILER V9.60.7.0   TMR2                                                              12/09/2024 15:08:46 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR2
+OBJECT MODULE PLACED IN .\Release\Objects\tmr2.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\tmr2.c LARGE OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X000C) IN
+                    -CDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware;..\..\Lowpower) INTERVAL(3) DEBUG OBJECTEXTEND PRI
+                    -NT(.\Release\Listings\tmr2.lst) OBJECT(.\Release\Objects\tmr2.obj)
+
+line level    source
+
+   1          // ¶¨Ê±Æ÷TMR2µÄÇý¶¯Ô´ÎÄ¼þ
+   2          #include "tmr2.h"
+   3          
+   4          #define TMR2_CNT_TIME (SYSCLK / 32 / 1000 - 1) // ¼ÆÊýÖÜÆÚ 1KHz£¬1ms²úÉúÒ»´ÎÖÐ¶Ï
+   5          
+   6          // volatile unsigned char tmr2_flag = 0; // tmr2ÖÐ¶Ï·þÎñº¯ÊýÖÐ»áÖÃÎ»µÄ±êÖ¾Î»
+   7          volatile u32 tmr2_cnt = 0; // ¶¨Ê±Æ÷TMR2µÄ¼ÆÊýÖµ£¨Ã¿´ÎÔÚÖÐ¶Ï·þÎñº¯ÊýÖÐ»á¼ÓÒ»£©
+   8          
+   9          /**
+  10           * @brief ÅäÖÃ¶¨Ê±Æ÷TMR2
+  11           */
+  12          void tmr2_config(void)
+  13          {
+  14   1          // ÅäÖÃ¶¨Ê±Æ÷£¬ÓÃÀ´¼ÇÂ¼RF½ÓÊÕµ½µÄ¸ßµçÆ½³ÖÐøÊ±¼ä
+  15   1          __SetIRQnIP(TMR2_IRQn, TMR2_IQn_CFG); // ÉèÖÃÖÐ¶ÏÓÅÏÈ¼¶£¨TMR2£©
+  16   1      
+  17   1          TMR2_CONL &= ~TMR_PRESCALE_SEL(0x03); // Çå³ýTMR2µÄÔ¤·ÖÆµÅäÖÃ¼Ä´æÆ÷
+  18   1          TMR2_CONL |= TMR_PRESCALE_SEL(0x05);  // ÅäÖÃ·ÖÆµÏµÊý
+  19   1          TMR2_CONL &= ~TMR_MODE_SEL(0x03);     // Çå³ýTMR2µÄÄ£Ê½ÅäÖÃ¼Ä´æÆ÷
+  20   1          TMR2_CONL |= TMR_MODE_SEL(0x01);      // ÅäÖÃTMR2µÄÄ£Ê½Îª¼ÆÊýÆ÷Ä£Ê½£¬×îºó¶ÔÏµÍ³Ê±ÖÓµÄÂö³å½øÐÐ¼ÆÊý
+  21   1      
+  22   1          TMR2_CONH &= ~TMR_PRD_PND(0x01); // Çå³ýTMR2µÄ¼ÆÊý±êÖ¾Î»£¬±íÊ¾Î´Íê³É¼ÆÊý
+  23   1          TMR2_CONH |= TMR_PRD_IRQ_EN(1);  // Ê¹ÄÜTMR2µÄ¼ÆÊýÖÐ¶Ï
+  24   1      
+  25   1          // ÅäÖÃTMR2µÄ¼ÆÊýÖÜÆÚ
+  26   1          TMR2_PRL = (unsigned char)(TMR2_CNT_TIME % 255);
+  27   1          TMR2_PRH = (unsigned char)(TMR2_CNT_TIME / 255);
+  28   1      
+  29   1          // Çå³ýTMR2µÄ¼ÆÊýÖµ
+  30   1          // TMR2_CNTL = 0;
+  31   1          // TMR2_CNTH = 0;
+  32   1          TMR_ALLCON = TMR2_CNT_CLR(0x1); // Çå³ý¼ÆÊýÖµ
+  33   1      
+  34   1          TMR2_CONL &= ~(TMR_SOURCE_SEL(0x07)); // Çå³ýTMR2µÄÊ±ÖÓÔ´ÅäÖÃ¼Ä´æÆ÷
+  35   1          // TMR2_CONL |= TMR_SOURCE_SEL(0x07); // ÅäÖÃTMR2µÄÊ±ÖÓÔ´£¬Ê¹ÓÃÏµÍ³Ê±ÖÓ
+  36   1          TMR2_CONL |= TMR_SOURCE_SEL(0x05); // ÅäÖÃTMR2µÄÊ±ÖÓÔ´£¬²»ÓÃÈÎºÎÊ±ÖÓ
+  37   1                                             // __EnableIRQ(TMR2_IRQn);                          // Ê¹ÄÜÖÐ¶Ï
+  38   1      
+  39   1          __DisableIRQ(TMR2_IRQn); // ½ûÓÃÖÐ¶Ï
+  40   1          IE_EA = 1;               // ´ò¿ª×ÜÖÐ¶Ï
+  41   1      }
+  42          
+  43          /**
+  44           * @brief ¿ªÆô¶¨Ê±Æ÷TMR2£¬¿ªÊ¼¼ÆÊ±
+  45           */
+  46          void tmr2_enable(void)
+  47          {
+  48   1          // ÖØÐÂ¸øTMR2ÅäÖÃÊ±ÖÓ
+  49   1          TMR2_CONL &= ~(TMR_SOURCE_SEL(0x07)); // Çå³ý¶¨Ê±Æ÷µÄÊ±ÖÓÔ´ÅäÖÃ¼Ä´æÆ÷
+  50   1          TMR2_CONL |= TMR_SOURCE_SEL(0x06);    // ÅäÖÃ¶¨Ê±Æ÷µÄÊ±ÖÓÔ´£¬Ê¹ÓÃÏµÍ³Ê±ÖÓ
+  51   1      
+  52   1          __EnableIRQ(TMR2_IRQn); // Ê¹ÄÜÖÐ¶Ï
+  53   1          IE_EA = 1;              // ´ò¿ª×ÜÖÐ¶Ï
+C51 COMPILER V9.60.7.0   TMR2                                                              12/09/2024 15:08:46 PAGE 2   
+
+  54   1      }
+  55          
+  56          /**
+  57           * @brief ¹Ø±Õ¶¨Ê±Æ÷2£¬Çå¿Õ¼ÆÊýÖµ
+  58           */
+  59          void tmr2_disable(void)
+  60          {
+  61   1          // ²»¸ø¶¨Ê±Æ÷Ìá¹©Ê±ÖÓ£¬ÈÃËüÍ£Ö¹¼ÆÊý
+  62   1          TMR2_CONL &= ~(TMR_SOURCE_SEL(0x07)); // Çå³ý¶¨Ê±Æ÷µÄÊ±ÖÓÔ´ÅäÖÃ¼Ä´æÆ÷
+  63   1          TMR2_CONL |= TMR_SOURCE_SEL(0x05);    // ÅäÖÃ¶¨Ê±Æ÷µÄÊ±ÖÓÔ´£¬²»ÓÃÈÎºÎÊ±ÖÓ
+  64   1      
+  65   1          // Çå³ý¶¨Ê±Æ÷µÄ¼ÆÊýÖµ
+  66   1          // TMR2_CNTL = 0;
+  67   1          // TMR2_CNTH = 0;
+  68   1          TMR_ALLCON = TMR2_CNT_CLR(0x1); // Çå³ý¼ÆÊýÖµ
+  69   1      
+  70   1          __DisableIRQ(TMR2_IRQn); // ¹Ø±ÕÖÐ¶Ï£¨²»Ê¹ÄÜÖÐ¶Ï£©
+  71   1      }
+  72          
+  73          // ¶¨Ê±Æ÷ÅäÖÃ³ÉPWMÊä³öÄ£Ê½£¨µ÷ÓÃ¸Ãº¯ÊýÇ°£¬ÒªÏÈ½«¶ÔÓ¦µÄIO¸´ÓÃµ½¶¨Ê±Æ÷µÄPWMÊä³öÉÏ£©
+  74          void tmr2_pwm_config(void)
+  75          {
+  76   1          //  ÅäÖÃP24Îªtimer2µÄPWMÊä³ö¶Ë¿Ú
+  77   1          P2_MD1 &= ~GPIO_P24_MODE_SEL(0x3); // ÇåÁã
+  78   1          P2_MD1 |= GPIO_P24_MODE_SEL(0x1);  // Êä³öÄ£Ê½
+  79   1          FOUT_S24 = GPIO_FOUT_TMR2_PWMOUT;  // ¸´ÓÃ³ÉTMRµÄPWMÊä³ö
+  80   1      
+  81   1      // #define PEROID_VAL (SYSCLK / 128 / 10000 - 1) // ÖÜÆÚÖµ=ÏµÍ³Ê±ÖÓ/·ÖÆµ/ÆµÂÊ - 1     // 10KHz
+  82   1      #define PEROID_VAL (SYSCLK / 128 / 1000 - 1) // ÖÜÆÚÖµ=ÏµÍ³Ê±ÖÓ/·ÖÆµ/ÆµÂÊ - 1     // 1KHz
+  83   1          // #define PEROID_VAL (SYSCLK / 128 / 100 - 1) // ÖÜÆÚÖµ=ÏµÍ³Ê±ÖÓ/·ÖÆµ/ÆµÂÊ - 1     // 100Hz
+  84   1          // #define PEROID_VAL (SYSCLK / 128 / 10 - 1) // ÖÜÆÚÖµ=ÏµÍ³Ê±ÖÓ/·ÖÆµ/ÆµÂÊ - 1     // 10Hz
+  85   1      
+  86   1          // ÅäÖÃÆµÂÊÎª1kHZ£¬50%Õ¼¿Õ±ÈµÄPWM    PWMÆµÂÊ=ÏµÍ³Ê±ÖÓ/·ÖÆµ/(ÖÜÆÚÖµ+1)
+  87   1          TMR_ALLCON = TMR2_CNT_CLR(0x1);                        // Çå³ý¼ÆÊýÖµ
+  88   1          TMR2_PRH = TMR_PERIOD_VAL_H((PEROID_VAL >> 8) & 0xFF); // ÖÜÆÚÖµ
+  89   1          TMR2_PRL = TMR_PERIOD_VAL_L((PEROID_VAL >> 0) & 0xFF);
+  90   1          TMR2_PWMH = TMR_PWM_VAL_H(((PEROID_VAL / 2) >> 8) & 0xFF); // Õ¼¿Õ±ÈÉèÖÃÖµ
+  91   1          TMR2_PWML = TMR_PWM_VAL_L(((PEROID_VAL / 2) >> 0) & 0xFF);
+  92   1          TMR2_CONH = TMR_PRD_PND(0x1) | TMR_PRD_IRQ_EN(0x1);                          // Ê¹ÄÜ¼ÆÊýÖÐ¶Ï
+  93   1          TMR2_CONL = TMR_SOURCE_SEL(0x7) | TMR_PRESCALE_SEL(0x7) | TMR_MODE_SEL(0x2); // Ñ¡ÔñÏµÍ³Ê±ÖÓ£¬128·ÖÆµ£
+             -¬PWMÄ£Ê½
+  94   1      }
+  95          
+  96          // TMR2ÖÐ¶Ï·þÎñº¯Êý
+  97          void TIMR2_IRQHandler(void) interrupt TMR2_IRQn
+  98          {
+  99   1      
+ 100   1          // ½øÈëÖÐ¶ÏÉèÖÃIP£¬²»¿ÉÉ¾³ý
+ 101   1          __IRQnIPnPush(TMR2_IRQn);
+ 102   1      
+ 103   1          // ---------------- ÓÃ»§º¯Êý´¦Àí -------------------
+ 104   1      
+ 105   1          // ÖÜÆÚÖÐ¶Ï
+ 106   1          if (TMR2_CONH & TMR_PRD_PND(0x1))
+ 107   1          {
+ 108   2              TMR2_CONH |= TMR_PRD_PND(0x1); // Çå³ýpending
+ 109   2      
+ 110   2              tmr2_cnt++; // Ã¿5ms¼ÓÒ»´Î
+ 111   2          }
+ 112   1      
+ 113   1          // ÍË³öÖÐ¶ÏÉèÖÃIP£¬²»¿ÉÉ¾³ý
+ 114   1          __IRQnIPnPop(TMR2_IRQn);
+C51 COMPILER V9.60.7.0   TMR2                                                              12/09/2024 15:08:46 PAGE 3   
+
+ 115   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    234    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      4    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
