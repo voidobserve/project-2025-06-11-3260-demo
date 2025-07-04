@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "my_config.h": "c",
-        "include.h": "c"
+        "include.h": "c",
+        "tmr0.h": "c"
     }
 }

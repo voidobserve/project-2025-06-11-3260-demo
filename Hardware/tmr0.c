@@ -1,6 +1,6 @@
 #include "tmr0.h"
 
-extern volatile bit flag_is_adjust_pwm_time_comes;
+
 
 /**
  * @brief 配置定时器TMR0
@@ -31,15 +31,33 @@ void TIMR0_IRQHandler(void) interrupt TMR0_IRQn
     {
         TMR0_CONH |= TMR_PRD_PND(0x1); // 清除pending
 
-        {
+        { 
             static u16 cnt = 0;
             cnt++;
             if (cnt >= 100)
             {
                 cnt = 0;
-                flag_is_adjust_pwm_time_comes = 1;
+                flag_is_adjust_pwm_time_comes = 1; // 表示调节充电的时间到来
             }
         }
+
+        #if 1 // 电池电量指示灯控制
+
+        {
+            static u16 cnt = 0;
+
+            if (1)
+            {
+                // 如果正在充电，最高位指示灯闪烁，满电则不闪烁
+            }
+            else
+            {
+                // 如果不在充电
+            }
+        }
+
+        #endif// 电池电量指示灯控制
+
     }
 
     // 退出中断设置IP，不可删除

@@ -26,18 +26,21 @@ Project File Date:  07/03/2025
 
 <h2>Output:</h2>
 Build target 'Target 1'
+compiling tmr0.c...
+..\..\Hardware\tmr0.c(47): warning C280: 'cnt': unreferenced local variable
+compiling tmr1.c...
+compiling adc.c...
+compiling uart0.c...
+compiling main.c...
+..\..\User\main.c(303): warning C280: 'flag_last_charging_status': unreferenced local variable
 linking...
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_ADC_SEL_PIN?ADC
+    SEGMENT: ?PR?LED_CONFIG?MAIN
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?ADC_GETVAL?ADC
+    SEGMENT: ?PR?CHARGING_DETECT?MAIN
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?_PUTCHAR?UART0
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?UART0_CONFIG?UART0
-*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
-    SEGMENT: ?PR?CHARGE_HANDLE?MAIN
-Program Size: data=9.2 xdata=49 code=2266
+    SEGMENT: ?PR?LED_HANDLE?MAIN
+Program Size: data=16.2 xdata=73 code=3565
 creating hex file from ".\Release\Objects\Project"...
 ".\Release\Objects\Project" - 0 Error(s), 5 Warning(s).
 Build Time Elapsed:  00:00:00

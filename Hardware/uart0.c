@@ -18,7 +18,7 @@ void uart0_config(void)
     P0_MD0 |= GPIO_P02_MODE_SEL(0x01);
     FOUT_S02 = GPIO_FOUT_UART0_TX;
 
-     UART0_BAUD1 = (((SYSCLK - UART0_BAUD) / UART0_BAUD) >> 8) & 0xFF;
+    UART0_BAUD1 = (((SYSCLK - UART0_BAUD) / UART0_BAUD) >> 8) & 0xFF;
     UART0_BAUD0 = ((SYSCLK - UART0_BAUD) / UART0_BAUD) & 0xFF;
     UART0_CON0 = UART_STOP_BIT(0x0) |
                  UART_EN(0x1); // 8bitÊý¾Ý£¬1bitÍ£Ö¹Î»

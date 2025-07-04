@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   SYSTEM                                                            07/03/2025 10:24:34 PAGE 1   
+C51 COMPILER V9.60.7.0   SYSTEM                                                            07/04/2025 16:14:39 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SYSTEM
@@ -62,7 +62,7 @@ line level    source
   51   1          while (ms--)
   52   1          {
   53   2      #if 0 // 如果开启了看门狗，需要使用这部分的代码
-C51 COMPILER V9.60.7.0   SYSTEM                                                            07/03/2025 10:24:34 PAGE 2   
+C51 COMPILER V9.60.7.0   SYSTEM                                                            07/04/2025 16:14:39 PAGE 2   
 
                       // WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗操作
                       // delay(1140); // 调试得出的数值（由于这里加了喂狗操作，数值需要重新调整，不用原来的1450）

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UART0                                                             07/03/2025 16:22:49 PAGE 1   
+C51 COMPILER V9.60.7.0   UART0                                                             07/04/2025 17:19:03 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART0
@@ -29,7 +29,7 @@ line level    source
   18   1          P0_MD0 |= GPIO_P02_MODE_SEL(0x01);
   19   1          FOUT_S02 = GPIO_FOUT_UART0_TX;
   20   1      
-  21   1           UART0_BAUD1 = (((SYSCLK - UART0_BAUD) / UART0_BAUD) >> 8) & 0xFF;
+  21   1          UART0_BAUD1 = (((SYSCLK - UART0_BAUD) / UART0_BAUD) >> 8) & 0xFF;
   22   1          UART0_BAUD0 = ((SYSCLK - UART0_BAUD) / UART0_BAUD) & 0xFF;
   23   1          UART0_CON0 = UART_STOP_BIT(0x0) |
   24   1                       UART_EN(0x1); // 8bitÊý¾Ý£¬1bitÍ£Ö¹Î»
